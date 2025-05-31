@@ -1,0 +1,20 @@
+groups:
+- name: saleor-alerts
+  rules:
+  - alert: HighCPUUsage
+    expr: rate(node_cpu_seconds_total{mode="system"}[1m]) > 0.9
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      description: "CPU usage is > 90% for 2 minutes"
+      summary: "High CPU usage"
+
+  - alert: SaleorBackendDown
+    expr: probe_success == 0
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Saleor backend is down"
+      description: "Blackbox exporter could not reach Saleor backend"

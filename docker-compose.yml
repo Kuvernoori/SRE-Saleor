@@ -15,15 +15,15 @@ services:
       - redis
       - jaeger
     volumes:
-      # shared volume between worker and api for media
       - saleor-media:/app/media
+      - ./path/to/your/local/settings:/app/settings  # Монтируем локальные файлы настроек
     env_file:
       - common.env
       - backend.env
     environment:
       - JAEGER_AGENT_HOST=jaeger
       - DASHBOARD_URL=http://localhost:9000/
-      - ALLOWED_HOSTS=localhost,api
+      - ALLOWED_HOSTS=*  # Добавьте сюда необходимые хосты
 
   dashboard:
     image: ghcr.io/saleor/saleor-dashboard:latest
@@ -68,7 +68,6 @@ services:
       - redis
       - mailpit
     volumes:
-      # shared volume between worker and api for media
       - saleor-media:/app/media
 
   jaeger:
@@ -97,12 +96,59 @@ services:
     networks:
       - saleor-backend-tier
 
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: saleor-prometheus
+    ports:
+      - "9090:9090"
+    restart: unless-stopped
+    networks:
+      - saleor-backend-tier
+    volumes:
+      - ./prometheus-config:/etc/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus/"
+      - "--web.listen-address=:9090"
+
+
+  blackbox-exporter:
+    image: prom/blackbox-exporter
+    ports:
+      - "9115:9115"
+    restart: unless-stopped
+    networks:
+      - saleor-backend-tier
+
+  node-exporter:
+    image: prom/node-exporter
+    ports:
+      - "9100:9100"
+    networks:
+      - saleor-backend-tier
+    restart: unless-stopped
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3001:3000"
+    networks:
+      - saleor-backend-tier
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-storage:/var/lib/grafana
+
+
 volumes:
   saleor-db:
     driver: local
   saleor-redis:
     driver: local
   saleor-media:
+    driver: local
+  grafana-storage:
+
 
 networks:
   saleor-backend-tier:

@@ -1,3 +1,10 @@
+## About
+
+This project is based on the open-source [Saleor Platform](https://github.com/saleor/saleor-platform) © 2020–2022 Saleor Commerce / Mirumee Software.
+
+Modifications include additional monitoring setup, alerting rules, SLO/SLI/SLA documentation, and simulated incident response for learning and demonstration purposes.
+
+
 ![Saleor Platform](https://user-images.githubusercontent.com/249912/71523206-4e45f800-28c8-11ea-84ba-345a9bfc998a.png)
 
 <div align="center">
