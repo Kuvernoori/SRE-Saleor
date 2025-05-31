@@ -1,45 +1,34 @@
-name: Saleor CI/CD
+name: Deploy Saleor
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
 
 jobs:
-  build-test-deploy:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Clone repo
         uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install dependencies
+      - name: Download Docker & Docker Compose
         run: |
-          cd saleor
-          pip install -r requirements.txt
+          sudo apt-get update
+          sudo apt-get install docker.io docker-compose -y
+          sudo systemctl start docker
+          sudo systemctl enable docker
 
-      - name: Run tests
+      - name: Build and test containers
         run: |
-          cd saleor
-          pytest || echo "Tests failed but proceeding for demo purposes"
+          docker compose up -d --build
 
-      - name: Build Docker image
+      - name: wait 20 seconds
+        run: sleep 20
+
+      - name: Test GraphQL API
         run: |
-          docker build -t saleor-api ./saleor
-
-      - name: Save image as artifact (optional)
-        uses: actions/upload-artifact@v4
-        with:
-          name: saleor-api
-          path: |
-            saleor
-
-      - name: Deploy to local Docker
-        run: |
-          docker stop saleor-api || true
-          docker rm saleor-api || true
-          docker run -d -p 8000:8000 --name saleor-api saleor-api
+          curl -X POST http://localhost:8000/graphql/ \
+            -H "Content-Type: application/json" \
+            -d '{"query": "{ __typename }"}'
